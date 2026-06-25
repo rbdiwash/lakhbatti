@@ -20,6 +20,14 @@ type IconType = ComponentType<{ className?: string }>;
 
 type ListField = "areas" | "gardenTasks" | "mowingExtras";
 
+type StepErrors = {
+  areas?: string;
+  gardenTasks?: string;
+  gardenSize?: string;
+  dateFrom?: string;
+  frequency?: string;
+};
+
 type QuoteData = {
   category: string;
   // Cleaning
@@ -185,6 +193,7 @@ export function QuoteForm() {
   const [data, setData] = useState<QuoteData>(initialData);
   const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
+  const [stepErrors, setStepErrors] = useState<StepErrors>({});
   const [sending, setSending] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const otherRef = useRef<HTMLInputElement>(null);
@@ -193,18 +202,52 @@ export function QuoteForm() {
   const currentKey = flow[Math.min(step, flow.length - 1)];
 
   function update(partial: Partial<QuoteData>) {
+    setStepErrors({});
     setData((d) => ({ ...d, ...partial }));
   }
 
   function next() {
+    setStepErrors({});
     setStep((s) => Math.min(s + 1, flow.length - 1));
   }
 
   function back() {
+    setStepErrors({});
     setStep((s) => Math.max(s - 1, 0));
   }
 
+  function validateStep(key: string): boolean {
+    const errs: StepErrors = {};
+
+    if (key === "areas" && data.areas.length === 0) {
+      errs.areas = "Please select at least one area.";
+    }
+
+    if (key === "gardenDetails") {
+      if (data.gardenTasks.length === 0) {
+        errs.gardenTasks = "Please select at least one task.";
+      }
+      if (!data.gardenSize) {
+        errs.gardenSize = "Please select a garden size.";
+      }
+    }
+
+    if (key === "schedule") {
+      if (!data.dateFrom) errs.dateFrom = "Please choose a preferred date.";
+      if (!data.frequency)
+        errs.frequency = "Please select how often you need the service.";
+    }
+
+    setStepErrors(errs);
+    return Object.keys(errs).length === 0;
+  }
+
+  function tryNext() {
+    if (validateStep(currentKey)) next();
+  }
+
   function toggleList(key: ListField, value: string) {
+    setStepErrors({});
     setData((d) => {
       const list = d[key];
       return {
@@ -274,6 +317,7 @@ export function QuoteForm() {
   function reset() {
     setData(initialData);
     setErrors({});
+    setStepErrors({});
     setSubmitError(null);
     setStep(0);
     setSubmitted(false);
@@ -401,7 +445,9 @@ export function QuoteForm() {
           title={titles.areas}
           subtitle="Select the areas and number of rooms."
         >
-          <p className="text-sm font-medium text-zinc-700">Areas to clean</p>
+          <p className="text-sm font-medium text-zinc-700">
+            Areas to clean <span className="text-brand-600">*</span>
+          </p>
           <div className="mt-3 grid grid-cols-3 gap-3">
             {areaOptions.map((area) => (
               <ToggleChip
@@ -412,9 +458,14 @@ export function QuoteForm() {
               />
             ))}
           </div>
+          {stepErrors.areas && (
+            <p className="mt-2 text-xs text-red-500">{stepErrors.areas}</p>
+          )}
 
           <div className="mt-6">
-            <p className="text-sm font-medium text-zinc-700">Number of rooms</p>
+            <p className="text-sm font-medium text-zinc-700">
+              Number of rooms <span className="text-brand-600">*</span>
+            </p>
             <div className="mt-3 flex items-center gap-4">
               <Stepper
                 value={data.rooms}
@@ -431,7 +482,7 @@ export function QuoteForm() {
             </div>
           </div>
 
-          <NextButton onClick={next} />
+          <NextButton onClick={tryNext} />
         </Step>
       )}
 
@@ -465,7 +516,9 @@ export function QuoteForm() {
           title={titles.gardenDetails}
           subtitle="Tell us what's involved and how big the garden is."
         >
-          <p className="text-sm font-medium text-zinc-700">Tasks needed</p>
+          <p className="text-sm font-medium text-zinc-700">
+            Tasks needed <span className="text-brand-600">*</span>
+          </p>
           <div className="mt-3 grid grid-cols-2 gap-3">
             {gardenTaskOptions.map((task) => (
               <ToggleChip
@@ -476,9 +529,14 @@ export function QuoteForm() {
               />
             ))}
           </div>
+          {stepErrors.gardenTasks && (
+            <p className="mt-2 text-xs text-red-500">{stepErrors.gardenTasks}</p>
+          )}
 
           <div className="mt-6">
-            <p className={labelClass}>Garden size</p>
+            <p className={labelClass}>
+              Garden size <span className="text-brand-600">*</span>
+            </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {gardenSizes.map((size) => (
                 <PillButton
@@ -489,9 +547,12 @@ export function QuoteForm() {
                 />
               ))}
             </div>
+            {stepErrors.gardenSize && (
+              <p className="mt-2 text-xs text-red-500">{stepErrors.gardenSize}</p>
+            )}
           </div>
 
-          <NextButton disabled={!data.gardenSize} onClick={next} />
+          <NextButton onClick={tryNext} />
         </Step>
       )}
 
@@ -545,15 +606,19 @@ export function QuoteForm() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="dateFrom" className={labelClass}>
-                Preferred from
+                Preferred from <span className="text-brand-600">*</span>
               </label>
               <input
                 id="dateFrom"
                 type="date"
+                required
                 value={data.dateFrom}
                 onChange={(e) => update({ dateFrom: e.target.value })}
                 className={`mt-1.5 ${inputClass}`}
               />
+              {stepErrors.dateFrom && (
+                <p className="mt-1 text-xs text-red-500">{stepErrors.dateFrom}</p>
+              )}
             </div>
             <div>
               <label htmlFor="dateTo" className={labelClass}>
@@ -570,7 +635,9 @@ export function QuoteForm() {
           </div>
 
           <div className="mt-6">
-            <p className={labelClass}>How often?</p>
+            <p className={labelClass}>
+              How often? <span className="text-brand-600">*</span>
+            </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {frequencies.map((freq) => (
                 <PillButton
@@ -581,9 +648,12 @@ export function QuoteForm() {
                 />
               ))}
             </div>
+            {stepErrors.frequency && (
+              <p className="mt-2 text-xs text-red-500">{stepErrors.frequency}</p>
+            )}
           </div>
 
-          <NextButton onClick={next} />
+          <NextButton onClick={tryNext} />
         </Step>
       )}
 
@@ -601,6 +671,7 @@ export function QuoteForm() {
               <input
                 id="name"
                 type="text"
+                required
                 value={data.name}
                 onChange={(e) => update({ name: e.target.value })}
                 placeholder="Jane Smith"
@@ -617,6 +688,7 @@ export function QuoteForm() {
               <input
                 id="email"
                 type="email"
+                required
                 value={data.email}
                 onChange={(e) => update({ email: e.target.value })}
                 placeholder="you@example.com"

@@ -52,18 +52,18 @@ export function Footer() {
       </div>
 
       {/* Main footer */}
-      <div className="bg-zinc-900 text-zinc-300">
+      <div className="bg-linear-to-b from-brand-800 to-brand-900 text-brand-100">
         <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
           <div className="grid gap-12 lg:grid-cols-12 lg:gap-8">
             {/* Brand */}
             <div className="lg:col-span-4">
-              <div className="inline-block rounded-xl bg-white px-3 py-2">
+              <div className="inline-block rounded-xl bg-white px-3 py-2 shadow-sm">
                 <Logo />
               </div>
-              <p className="mt-5 max-w-sm text-sm leading-relaxed text-zinc-400">
+              <p className="mt-5 max-w-sm text-sm leading-relaxed text-brand-100/80">
                 {site.description}
               </p>
-              <p className="mt-4 text-xs font-medium uppercase tracking-wider text-brand-400">
+              <p className="mt-4 text-xs font-medium uppercase tracking-wider text-accent-400">
                 {site.tagline}
               </p>
             </div>
@@ -79,7 +79,7 @@ export function Footer() {
                     <li key={link.href}>
                       <Link
                         href={link.href}
-                        className="text-sm text-zinc-400 transition-colors hover:text-white"
+                        className="text-sm text-brand-100/70 transition-colors hover:text-white"
                       >
                         {link.label}
                       </Link>
@@ -88,7 +88,7 @@ export function Footer() {
                   <li>
                     <Link
                       href="/quote"
-                      className="text-sm font-medium text-brand-400 transition-colors hover:text-brand-300"
+                      className="text-sm font-medium text-accent-400 transition-colors hover:text-accent-300"
                     >
                       Get a Quote
                     </Link>
@@ -105,7 +105,7 @@ export function Footer() {
                     <li key={s.title}>
                       <Link
                         href="/services"
-                        className="text-sm text-zinc-400 transition-colors hover:text-white"
+                        className="text-sm text-brand-100/70 transition-colors hover:text-white"
                       >
                         {s.title}
                       </Link>
@@ -123,22 +123,22 @@ export function Footer() {
               <ul className="mt-4 space-y-4">
                 {contactItems.map((item) => (
                   <li key={item.label} className="flex gap-3">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zinc-800 text-brand-400">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-700/60 text-brand-50">
                       <item.icon className="h-4 w-4" />
                     </span>
                     <span className="min-w-0 pt-0.5">
-                      <span className="block text-xs font-medium text-zinc-500">
+                      <span className="block text-xs font-medium text-brand-200/60">
                         {item.label}
                       </span>
                       {item.href ? (
                         <a
                           href={item.href}
-                          className="mt-0.5 block text-sm text-zinc-300 transition-colors hover:text-white"
+                          className="mt-0.5 block text-sm text-brand-50 transition-colors hover:text-white"
                         >
                           {item.value}
                         </a>
                       ) : (
-                        <span className="mt-0.5 block text-sm text-zinc-300">
+                        <span className="mt-0.5 block text-sm text-brand-50">
                           {item.value}
                         </span>
                       )}
@@ -151,8 +151,8 @@ export function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="border-t border-zinc-800">
-          <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-6 text-center text-xs text-zinc-500 sm:flex-row sm:px-6 sm:text-left">
+        <div className="border-t border-brand-700/50">
+          <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-6 text-center text-xs text-brand-200/60 sm:flex-row sm:px-6 sm:text-left">
             <p>
               © {new Date().getFullYear()} {site.name}. All rights reserved.
             </p>
@@ -160,7 +160,7 @@ export function Footer() {
               Serving Sydney &amp; surrounds ·{" "}
               <a
                 href={`tel:${site.phone.replace(/\s/g, "")}`}
-                className="text-zinc-400 transition-colors hover:text-white"
+                className="text-brand-100 transition-colors hover:text-white"
               >
                 {site.phone}
               </a>

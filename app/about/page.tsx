@@ -39,7 +39,7 @@ export default function AboutPage() {
   return (
     <>
       <section className="bg-linear-to-b from-brand-50 to-white">
-        <div className="mx-auto max-w-4xl px-4 py-20 text-center sm:px-6">
+        <div className="mx-auto max-w-4xl px-4 py-10 text-center sm:px-6">
           <span className="text-sm font-semibold uppercase tracking-wide text-brand-600">
             About us
           </span>
@@ -54,7 +54,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+      <section className="mx-auto max-w-6xl px-4 py-4 sm:px-6">
         <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
           <div className="order-2 lg:order-1">
             <h2 className="text-3xl font-bold tracking-tight text-zinc-900">
