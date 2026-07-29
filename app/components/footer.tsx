@@ -58,7 +58,7 @@ export function Footer() {
             {/* Brand */}
             <div className="lg:col-span-4">
               <div className="inline-block rounded-xl bg-white px-3 py-2 shadow-sm">
-                <Logo />
+                <Logo type="full" width={1100} height={280} />
               </div>
               <p className="mt-5 max-w-sm text-sm leading-relaxed text-brand-100/80">
                 {site.description}
