@@ -2,40 +2,51 @@ import Image from "next/image";
 import Link from "next/link";
 import { site } from "../lib/site";
 
+const LOGO_PATHS = {
+  full: "/images/lakhbatti-logo.png",
+  "logo-only": "/images/lakhbatti-logo-only.png",
+} as const;
+
 export function Logo({
   className = "",
+  imageClassName,
   onClick,
   type = "full",
-  width = 1100,
-  height = 280,
+  width,
+  height,
 }: {
   className?: string;
+  /** Applied to the image element (height/width in header, etc.) */
+  imageClassName?: string;
   onClick?: () => void;
-  type?: "full" | "logo-only";
+  type?: keyof typeof LOGO_PATHS;
   width?: number;
   height?: number;
 }) {
+  const src = LOGO_PATHS[type];
+  const isIcon = type === "logo-only";
+  const w = width ?? (isIcon ? 48 : 200);
+  const h = height ?? (isIcon ? 48 : 80);
+  const imgClass =
+    imageClassName ??
+    (isIcon ? "h-10 w-10 object-contain sm:h-11 sm:w-11" : "h-auto w-auto");
+
   return (
     <Link
       href="/"
       onClick={onClick}
       aria-label={`${site.name} home`}
-      className={`inline-flex items-center gap-3 ${className}`}
+      className={`inline-flex shrink-0 items-center ${className}`}
     >
       <Image
-        src={
-          type === "full"
-            ? "/images/lakhbatti-logo.png"
-            : "/images/lakhbatti-logo-only.png"
-        }
+        src={src}
         alt={`${site.name} logo`}
-        width={width}
-        height={height}
+        width={w}
+        height={h}
         priority
         unoptimized
-        // className={`h-12 w-auto sm:h-14`}
+        className={imgClass}
       />
-      <span className="sr-only">{site.name}</span>
     </Link>
   );
 }

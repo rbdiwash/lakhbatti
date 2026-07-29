@@ -13,12 +13,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-zinc-100 bg-white/90 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-        <Logo
-          onClick={() => setOpen(false)}
-          type="logo-only"
-          width={40}
-          height={40}
-        />
+        <Logo onClick={() => setOpen(false)} type="logo-only" />
 
         <nav className="hidden items-center gap-8 md:flex">
           {navLinks.map((link) => {
