@@ -58,6 +58,8 @@ const emptyAvailability: Availability = {
   hasSickLeave: false,
   hasAnnualLeave: false,
   hasPublicHolidayRate: false,
+  hasRegisteredVehicle: false,
+  vehicleRegistrationNumber: "",
 };
 
 const emptyCompliance: ComplianceDocs = {
@@ -118,11 +120,17 @@ type RegistrationContextValue = RegistrationState & {
   resetForm: () => void;
 };
 
-const RegistrationContext = createContext<RegistrationContextValue | null>(null);
+const RegistrationContext = createContext<RegistrationContextValue | null>(
+  null,
+);
 
 // ─── Provider ────────────────────────────────────────────────────────────────
 
-export function RegistrationProvider({ children }: { children: React.ReactNode }) {
+export function RegistrationProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [step, setStep] = useState(0);
   const [personal, setPersonal] = useState(emptyPersonal);
   const [contact, setContact] = useState(emptyContact);
@@ -136,13 +144,34 @@ export function RegistrationProvider({ children }: { children: React.ReactNode }
   const nextStep = useCallback(() => setStep((s) => s + 1), []);
   const prevStep = useCallback(() => setStep((s) => Math.max(0, s - 1)), []);
 
-  const updatePersonal = useCallback((d: Partial<PersonalDetails>) => setPersonal((p) => ({ ...p, ...d })), []);
-  const updateContact = useCallback((d: Partial<ContactDetails>) => setContact((p) => ({ ...p, ...d })), []);
-  const updateWorkRights = useCallback((d: Partial<WorkRights>) => setWorkRights((p) => ({ ...p, ...d })), []);
-  const updateAvailability = useCallback((d: Partial<Availability>) => setAvailability((p) => ({ ...p, ...d })), []);
-  const updateCompliance = useCallback((d: Partial<ComplianceDocs>) => setCompliance((p) => ({ ...p, ...d })), []);
-  const updateTraining = useCallback((d: Partial<Training>) => setTraining((p) => ({ ...p, ...d })), []);
-  const updateBank = useCallback((d: Partial<BankDetails>) => setBank((p) => ({ ...p, ...d })), []);
+  const updatePersonal = useCallback(
+    (d: Partial<PersonalDetails>) => setPersonal((p) => ({ ...p, ...d })),
+    [],
+  );
+  const updateContact = useCallback(
+    (d: Partial<ContactDetails>) => setContact((p) => ({ ...p, ...d })),
+    [],
+  );
+  const updateWorkRights = useCallback(
+    (d: Partial<WorkRights>) => setWorkRights((p) => ({ ...p, ...d })),
+    [],
+  );
+  const updateAvailability = useCallback(
+    (d: Partial<Availability>) => setAvailability((p) => ({ ...p, ...d })),
+    [],
+  );
+  const updateCompliance = useCallback(
+    (d: Partial<ComplianceDocs>) => setCompliance((p) => ({ ...p, ...d })),
+    [],
+  );
+  const updateTraining = useCallback(
+    (d: Partial<Training>) => setTraining((p) => ({ ...p, ...d })),
+    [],
+  );
+  const updateBank = useCallback(
+    (d: Partial<BankDetails>) => setBank((p) => ({ ...p, ...d })),
+    [],
+  );
 
   const buildPayload = useCallback(
     (): EmployeeRegistration => ({
@@ -156,7 +185,16 @@ export function RegistrationProvider({ children }: { children: React.ReactNode }
       agreedToTerms,
       submittedAt: new Date().toISOString(),
     }),
-    [personal, contact, workRights, availability, compliance, training, bank, agreedToTerms],
+    [
+      personal,
+      contact,
+      workRights,
+      availability,
+      compliance,
+      training,
+      bank,
+      agreedToTerms,
+    ],
   );
 
   const resetForm = useCallback(() => {
@@ -207,6 +245,9 @@ export function RegistrationProvider({ children }: { children: React.ReactNode }
 
 export function useRegistration() {
   const ctx = useContext(RegistrationContext);
-  if (!ctx) throw new Error("useRegistration must be used inside <RegistrationProvider>");
+  if (!ctx)
+    throw new Error(
+      "useRegistration must be used inside <RegistrationProvider>",
+    );
   return ctx;
 }

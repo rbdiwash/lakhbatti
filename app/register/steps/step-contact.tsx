@@ -16,16 +16,23 @@ const AU_STATES = [
   { value: "NT", label: "Northern Territory" },
 ];
 
-type Errors = Partial<Record<"email" | "phone" | "address" | "suburb" | "state" | "postcode", string>>;
+type Errors = Partial<
+  Record<
+    "email" | "phone" | "address" | "suburb" | "state" | "postcode",
+    string
+  >
+>;
 
 function validate(c: ReturnType<typeof useRegistration>["contact"]): Errors {
   const e: Errors = {};
-  if (!c.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email)) e.email = "Valid email required.";
+  if (!c.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email))
+    e.email = "Valid email required.";
   if (!c.phone.trim()) e.phone = "Phone number is required.";
   if (!c.address.trim()) e.address = "Street address is required.";
   if (!c.suburb.trim()) e.suburb = "Suburb is required.";
   if (!c.state) e.state = "State is required.";
-  if (!c.postcode || !/^\d{4}$/.test(c.postcode)) e.postcode = "Valid 4-digit postcode required.";
+  if (!c.postcode || !/^\d{4}$/.test(c.postcode))
+    e.postcode = "Valid 4-digit postcode required.";
   return e;
 }
 
@@ -69,7 +76,7 @@ export function StepContact() {
           />
         </Field>
 
-        <Field label="Street address" required error={errors.address} >
+        <Field label="Street address" required error={errors.address}>
           <Input
             value={contact.address}
             onChange={(e) => updateContact({ address: e.target.value })}
@@ -95,7 +102,9 @@ export function StepContact() {
           >
             <option value="">Select state</option>
             {AU_STATES.map((s) => (
-              <option key={s.value} value={s.value}>{s.label}</option>
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
             ))}
           </select>
         </Field>
@@ -105,7 +114,10 @@ export function StepContact() {
             value={contact.postcode}
             onChange={(e) => updateContact({ postcode: e.target.value })}
             placeholder="2200"
+            type="number"
+            inputMode="numeric"
             maxLength={4}
+            minLength={4}
             error={!!errors.postcode}
           />
         </Field>
@@ -133,7 +145,9 @@ export function StepContact() {
           <Field label="Name">
             <Input
               value={contact.emergencyContactName}
-              onChange={(e) => updateContact({ emergencyContactName: e.target.value })}
+              onChange={(e) =>
+                updateContact({ emergencyContactName: e.target.value })
+              }
               placeholder="Full name"
             />
           </Field>
@@ -141,7 +155,9 @@ export function StepContact() {
             <Input
               type="tel"
               value={contact.emergencyContactPhone}
-              onChange={(e) => updateContact({ emergencyContactPhone: e.target.value })}
+              onChange={(e) =>
+                updateContact({ emergencyContactPhone: e.target.value })
+              }
               placeholder="04xx xxx xxx"
             />
           </Field>

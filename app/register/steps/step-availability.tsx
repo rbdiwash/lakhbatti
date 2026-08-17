@@ -428,7 +428,23 @@ export function StepAvailability() {
           checked={availability.hasDriverLicense}
           description="This is a great advantage for our clients."
           onChange={(v) => updateAvailability({ hasDriverLicense: v })}
+        />{" "}
+        <ToggleRow
+          label="Has a registered vehicle"
+          checked={availability.hasRegisteredVehicle}
+          description="The chances are higher if you have a registered vehicle."
+          onChange={(v) => updateAvailability({ hasRegisteredVehicle: v })}
         />
+        {availability.hasRegisteredVehicle && (
+          <Input
+            type="text"
+            value={availability.vehicleRegistrationNumber}
+            onChange={(e) =>
+              updateAvailability({ vehicleRegistrationNumber: e.target.value })
+            }
+            placeholder="1234567890"
+          />
+        )}
         {/* <ToggleRow
           label="Entitled to sick leave"
           checked={availability.hasSickLeave}

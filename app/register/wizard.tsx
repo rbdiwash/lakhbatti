@@ -81,7 +81,7 @@ export function RegistrationWizard() {
   const ActiveStep = STEP_COMPONENTS[step];
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
+    <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6 bg-white">
       {/* Sidebar progress (desktop) + top bar (mobile) */}
       <WizardProgress currentStep={step} />
 
@@ -124,13 +124,16 @@ function MotivationBanner({ step }: { step: number }) {
           <p className={`font-semibold text-zinc-900 ${nudge ? "mt-1" : ""}`}>
             {copy.headline}
           </p>
-          <p className="mt-1 text-sm leading-relaxed text-zinc-600">{copy.body}</p>
+          <p className="mt-1 text-sm leading-relaxed text-zinc-600">
+            {copy.body}
+          </p>
         </div>
       </div>
       <p className="border-t border-brand-100/80 bg-white/60 px-4 py-2.5 text-center text-xs text-zinc-500 sm:px-5">
         Stuck on something?{" "}
         <span className="font-medium text-brand-700">
-          Take your time — there's no timer, and every section gets you closer to paid shifts.
+          Take your time — there's no timer, and every section gets you closer
+          to paid shifts.
         </span>
       </p>
     </div>
@@ -180,7 +183,11 @@ function WizardProgress({ currentStep }: { currentStep: number }) {
               </span>
               <span
                 className={`text-xs font-medium ${
-                  active ? "text-brand-700" : done ? "text-zinc-600" : "text-zinc-400"
+                  active
+                    ? "text-brand-700"
+                    : done
+                      ? "text-zinc-600"
+                      : "text-zinc-400"
                 }`}
               >
                 {s.title}
