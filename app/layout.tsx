@@ -3,6 +3,7 @@ import { Poppins } from "next/font/google";
 import "./globals.css";
 import { Header } from "./components/header";
 import { Footer } from "./components/footer";
+import { HideOnDashboard } from "./components/hide-on-dashboard";
 import { Providers } from "./components/providers";
 import { site } from "./lib/site";
 
@@ -31,7 +32,9 @@ export default function RootLayout({
         <Providers>
           <Header />
           <main className="flex-1">{children}</main>
-          <Footer />
+          <HideOnDashboard>
+            <Footer />
+          </HideOnDashboard>
         </Providers>
       </body>
     </html>

@@ -222,6 +222,7 @@ export function StepNav({
   isLast?: boolean;
   loading?: boolean;
 }) {
+  console.log(isLast);
   return (
     <div className="mt-8 flex items-center justify-between gap-3">
       {!isFirst ? (
@@ -237,7 +238,7 @@ export function StepNav({
       )}
       <button
         type={isLast ? "submit" : "button"}
-        onClick={isLast ? undefined : onNext}
+        onClick={onNext}
         disabled={loading}
         className="rounded-full bg-brand-600 px-7 py-2.5 text-sm font-semibold text-white shadow-sm shadow-brand-600/20 transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-brand-300"
       >

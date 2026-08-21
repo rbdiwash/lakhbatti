@@ -18,50 +18,17 @@ import type {
   UrgencyLevel,
   WorkType,
 } from "../../lib/types";
+import {
+  DAY_OPTIONS,
+  URGENCY_OPTIONS,
+  WORK_TYPE_OPTIONS,
+} from "../../lib/labels";
 
-const WORK_TYPES: { value: WorkType; label: string; description: string }[] = [
-  { value: "full-time", label: "Full-time", description: "38 hrs/week" },
-  { value: "part-time", label: "Part-time", description: "Less than 38 hrs" },
-  {
-    value: "casual",
-    label: "Casual",
-    description: "Flexible, as-needed shifts",
-  },
-  {
-    value: "independent-contractor",
-    label: "Independent Contractor",
-    description: "ABN required",
-  },
-  { value: "company", label: "Company", description: "Registered business" },
-];
-
-const DAY_LABELS: Record<DayOfWeek, string> = {
-  monday: "Monday",
-  tuesday: "Tuesday",
-  wednesday: "Wednesday",
-  thursday: "Thursday",
-  friday: "Friday",
-  saturday: "Saturday",
-  sunday: "Sunday",
-};
-
-const ALL_DAYS: DayOfWeek[] = [
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-  "sunday",
-];
-
-const URGENCY_OPTIONS: { value: UrgencyLevel; label: string }[] = [
-  { value: "immediately", label: "Immediately" },
-  { value: "within-1-week", label: "Within 1 week" },
-  { value: "within-2-weeks", label: "Within 2 weeks" },
-  { value: "within-1-month", label: "Within 1 month" },
-  { value: "flexible", label: "Flexible / Not urgent" },
-];
+const WORK_TYPES = WORK_TYPE_OPTIONS;
+const ALL_DAYS = DAY_OPTIONS.map((d) => d.value);
+const DAY_LABELS = Object.fromEntries(
+  DAY_OPTIONS.map((d) => [d.value, d.label]),
+) as Record<DayOfWeek, string>;
 
 type Errors = Partial<
   Record<"workType" | "days" | "urgency" | "expectedPayRate", string>
@@ -222,7 +189,7 @@ export function StepAvailability() {
       {errors.workType && (
         <p className="mb-2 text-xs text-red-500">{errors.workType}</p>
       )}
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-3">
         {WORK_TYPES.map((wt) => (
           <button
             key={wt.value}
@@ -367,7 +334,7 @@ export function StepAvailability() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+      <div className="mt-6 grid gap-4 sm:grid-cols-3">
         <Field label="When can you start?" required error={errors.urgency}>
           <Select
             value={availability.urgency}
@@ -397,9 +364,10 @@ export function StepAvailability() {
           />
         </Field>
       </div>
-
-      <div className="mt-6 grid gap-3">
+      <div className="mt-6">
         <SectionDivider label="Travel & entitlements" />
+      </div>
+      <div className="mt-6 grid gap-3 sm:grid-cols-3">
         <ToggleRow
           label="Willing to travel"
           description="Travel to different job sites"
@@ -442,7 +410,7 @@ export function StepAvailability() {
             onChange={(e) =>
               updateAvailability({ vehicleRegistrationNumber: e.target.value })
             }
-            placeholder="1234567890"
+            placeholder="Vehicle Registration Number"
           />
         )}
         {/* <ToggleRow

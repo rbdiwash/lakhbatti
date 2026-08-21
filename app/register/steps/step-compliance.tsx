@@ -5,7 +5,8 @@ import { Field, Input, SectionDivider, StepHeading, ToggleRow } from "../ui";
 import { StepNav } from "../wizard";
 
 export function StepCompliance() {
-  const { compliance, updateCompliance, nextStep, prevStep } = useRegistration();
+  const { compliance, updateCompliance, nextStep, prevStep } =
+    useRegistration();
 
   return (
     <div>
@@ -21,14 +22,21 @@ export function StepCompliance() {
           label="National Police Check"
           description="Certificate issued within the last 3 years"
           checked={compliance.hasPoliceCheck}
-          onChange={(v) => updateCompliance({ hasPoliceCheck: v, policeCheckExpiry: v ? compliance.policeCheckExpiry : "" })}
+          onChange={(v) =>
+            updateCompliance({
+              hasPoliceCheck: v,
+              policeCheckExpiry: v ? compliance.policeCheckExpiry : "",
+            })
+          }
         />
         {compliance.hasPoliceCheck && (
           <Field label="Police check expiry">
             <Input
               type="date"
               value={compliance.policeCheckExpiry}
-              onChange={(e) => updateCompliance({ policeCheckExpiry: e.target.value })}
+              onChange={(e) =>
+                updateCompliance({ policeCheckExpiry: e.target.value })
+              }
             />
           </Field>
         )}
@@ -37,7 +45,12 @@ export function StepCompliance() {
           label="Working With Children Check"
           description="Required for some aged care and school sites"
           checked={compliance.hasWorkingWithChildren}
-          onChange={(v) => updateCompliance({ hasWorkingWithChildren: v, wwcExpiry: v ? compliance.wwcExpiry : "" })}
+          onChange={(v) =>
+            updateCompliance({
+              hasWorkingWithChildren: v,
+              wwcExpiry: v ? compliance.wwcExpiry : "",
+            })
+          }
         />
         {compliance.hasWorkingWithChildren && (
           <Field label="WWC expiry">
@@ -55,14 +68,21 @@ export function StepCompliance() {
           label="Public Liability Insurance"
           description="Required for independent contractors"
           checked={compliance.hasPublicLiability}
-          onChange={(v) => updateCompliance({ hasPublicLiability: v, insuranceExpiry: v ? compliance.insuranceExpiry : "" })}
+          onChange={(v) =>
+            updateCompliance({
+              hasPublicLiability: v,
+              insuranceExpiry: v ? compliance.insuranceExpiry : "",
+            })
+          }
         />
         {compliance.hasPublicLiability && (
           <Field label="Insurance expiry">
             <Input
               type="date"
               value={compliance.insuranceExpiry}
-              onChange={(e) => updateCompliance({ insuranceExpiry: e.target.value })}
+              onChange={(e) =>
+                updateCompliance({ insuranceExpiry: e.target.value })
+              }
             />
           </Field>
         )}

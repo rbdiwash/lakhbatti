@@ -55,7 +55,7 @@ export function StepContact() {
 
       <SectionDivider label="Contact info" />
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-3">
         <Field label="Email" required error={errors.email}>
           <Input
             type="email"
@@ -122,9 +122,10 @@ export function StepContact() {
           />
         </Field>
       </div>
-
-      <div className="mt-6 grid gap-3">
+      <div className="mt-6">
         <SectionDivider label="Notifications" />
+      </div>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <ToggleRow
           label="SMS notifications"
           description="Receive job alerts and updates via text"
@@ -138,30 +139,29 @@ export function StepContact() {
           onChange={(v) => updateContact({ notifyByEmail: v })}
         />
       </div>
-
       <div className="mt-6">
         <SectionDivider label="Emergency contact" />
-        <div className="mt-3 grid gap-4 sm:grid-cols-2">
-          <Field label="Name">
-            <Input
-              value={contact.emergencyContactName}
-              onChange={(e) =>
-                updateContact({ emergencyContactName: e.target.value })
-              }
-              placeholder="Full name"
-            />
-          </Field>
-          <Field label="Phone">
-            <Input
-              type="tel"
-              value={contact.emergencyContactPhone}
-              onChange={(e) =>
-                updateContact({ emergencyContactPhone: e.target.value })
-              }
-              placeholder="04xx xxx xxx"
-            />
-          </Field>
-        </div>
+      </div>
+      <div className="mt-3 grid gap-4 sm:grid-cols-3">
+        <Field label="Name">
+          <Input
+            value={contact.emergencyContactName}
+            onChange={(e) =>
+              updateContact({ emergencyContactName: e.target.value })
+            }
+            placeholder="Full name"
+          />
+        </Field>
+        <Field label="Phone">
+          <Input
+            type="tel"
+            value={contact.emergencyContactPhone}
+            onChange={(e) =>
+              updateContact({ emergencyContactPhone: e.target.value })
+            }
+            placeholder="04xx xxx xxx"
+          />
+        </Field>
       </div>
 
       <StepNav onBack={prevStep} onNext={handleNext} />

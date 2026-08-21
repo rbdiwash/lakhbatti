@@ -2,6 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
+import { MuiThemeProvider } from "./mui-theme";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   // Create one QueryClient per browser session (useState ensures SSR safety)
@@ -16,6 +17,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <MuiThemeProvider>{children}</MuiThemeProvider>
+    </QueryClientProvider>
   );
 }

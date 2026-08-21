@@ -1,17 +1,21 @@
 import axios from "axios";
-import type { EmployeeRegistration } from "./types";
+import type {
+  CreateJobPayload,
+  EmployeeDetailRecord,
+  EmployeeListParams,
+  EmployeeListResponse,
+  EmployeeRegistration,
+  JobRecord,
+} from "./types";
 
-// ─── Axios Instance ──────────────────────────────────────────────────────────
-// BASE_URL can be swapped for a real API once the backend is ready.
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://jsonplaceholder.typicode.com";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export const apiClient = axios.create({
-  baseURL: BASE_URL,
+  baseURL: BASE_URL.replace(/\/$/, ""),
   headers: { "Content-Type": "application/json" },
-  timeout: 10_000,
+  timeout: 15_000,
 });
 
-// Optional: attach auth token if needed later
 apiClient.interceptors.request.use((config) => {
   const token =
     typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
@@ -19,27 +23,68 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// ─── API Functions ───────────────────────────────────────────────────────────
-
-/**
- * Submit a completed employee registration.
- * Currently posts to JSONPlaceholder as a dummy endpoint.
- * Replace "/posts" with your real route, e.g. "/api/employees/register".
- */
 export async function submitRegistration(
   data: EmployeeRegistration,
-): Promise<{ id: number; message: string }> {
-  const response = await apiClient.post("/posts", data);
-  // JSONPlaceholder echoes the body back; return a shaped response.
-  return { id: response.data.id ?? 1, message: "Registration submitted successfully." };
+): Promise<{ id: string; message: string }> {
+  const response = await apiClient.post("/api/employee/register", data);
+  return response.data;
 }
 
-/**
- * Check if an email is already registered (dummy — always returns false).
- * Replace with a real duplicate-check endpoint.
- */
 export async function checkEmailExists(email: string): Promise<boolean> {
-  // In production: const r = await apiClient.get(`/api/employees/check?email=${email}`);
-  void email;
-  return false;
+  const response = await apiClient.get("/api/employee/check", {
+    params: { email },
+  });
+  return Boolean(response.data.exists);
+}
+
+export async function listEmployees(
+  params: EmployeeListParams = {},
+): Promise<EmployeeListResponse> {
+  const cleaned = Object.fromEntries(
+    Object.entries(params).filter(([, value]) => {
+      if (value === "" || value === undefined || value === null) return false;
+      return true;
+    }),
+  );
+
+  const response = await apiClient.get("/api/employee/list", {
+    params: cleaned,
+  });
+
+  return {
+    data: Array.isArray(response.data?.data) ? response.data.data : [],
+    total: Number(response.data?.total ?? 0),
+    page: Number(response.data?.page ?? 1),
+    pageSize: Number(response.data?.pageSize ?? 10),
+    totalPages: Number(response.data?.totalPages ?? 1),
+    message: response.data?.message,
+  };
+}
+
+export async function getEmployee(id: string): Promise<EmployeeDetailRecord> {
+  const response = await apiClient.get(`/api/employee/${id}`);
+  return response.data.data;
+}
+
+export async function updateEmployee(
+  id: string,
+  data: Record<string, unknown>,
+) {
+  const response = await apiClient.put(`/api/employee/${id}`, data);
+  return response.data.data;
+}
+
+export async function deleteEmployee(id: string) {
+  const response = await apiClient.delete(`/api/employee/${id}`);
+  return response.data;
+}
+
+export async function listJobs(): Promise<JobRecord[]> {
+  const response = await apiClient.get("/api/jobs");
+  return Array.isArray(response.data?.data) ? response.data.data : [];
+}
+
+export async function createJob(data: CreateJobPayload): Promise<JobRecord> {
+  const response = await apiClient.post("/api/jobs", data);
+  return response.data.data;
 }

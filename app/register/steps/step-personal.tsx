@@ -12,9 +12,13 @@ const GENDER_OPTIONS = [
   { value: "prefer-not-to-say", label: "Prefer not to say" },
 ];
 
-type Errors = Partial<Record<"firstName" | "lastName" | "dateOfBirth" | "gender", string>>;
+type Errors = Partial<
+  Record<"firstName" | "lastName" | "dateOfBirth" | "gender", string>
+>;
 
-function validate(data: ReturnType<typeof useRegistration>["personal"]): Errors {
+function validate(
+  data: ReturnType<typeof useRegistration>["personal"],
+): Errors {
   const e: Errors = {};
   if (!data.firstName.trim()) e.firstName = "First name is required.";
   if (!data.lastName.trim()) e.lastName = "Last name is required.";
@@ -40,7 +44,7 @@ export function StepPersonal() {
         description="Let's start with the basics. This is how employers will identify you."
       />
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-3">
         <Field label="First name" required error={errors.firstName}>
           <Input
             value={personal.firstName}

@@ -5,7 +5,9 @@ import { useRegistration } from "../context";
 import { Field, Input, SectionDivider, StepHeading } from "../ui";
 import { StepNav } from "../wizard";
 
-type Errors = Partial<Record<"accountName" | "bsb" | "accountNumber" | "superFundName", string>>;
+type Errors = Partial<
+  Record<"accountName" | "bsb" | "accountNumber" | "superFundName", string>
+>;
 
 function validate(b: ReturnType<typeof useRegistration>["bank"]): Errors {
   const e: Errors = {};
@@ -36,13 +38,14 @@ export function StepBank() {
       <div className="mb-4 flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-3">
         <span className="text-lg">🔒</span>
         <p className="text-xs text-amber-800">
-          Your banking details are encrypted in transit and stored securely. They are only used to process payroll.
+          Your banking details are encrypted in transit and stored securely.
+          They are only used to process payroll.
         </p>
       </div>
 
       <SectionDivider label="Bank account" />
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+      <div className="mt-4 grid gap-4 sm:grid-cols-3">
         <Field label="Account name" required error={errors.accountName}>
           <Input
             value={bank.accountName}
@@ -93,7 +96,7 @@ export function StepBank() {
 
       <div className="mt-6">
         <SectionDivider label="Superannuation" />
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <div className="mt-4 grid gap-4 sm:grid-cols-3">
           <Field label="Super fund name" required error={errors.superFundName}>
             <Input
               value={bank.superFundName}
@@ -105,7 +108,9 @@ export function StepBank() {
           <Field label="Member number">
             <Input
               value={bank.superMemberNumber}
-              onChange={(e) => updateBank({ superMemberNumber: e.target.value })}
+              onChange={(e) =>
+                updateBank({ superMemberNumber: e.target.value })
+              }
               placeholder="123456789"
             />
           </Field>

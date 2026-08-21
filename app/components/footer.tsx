@@ -52,13 +52,18 @@ export function Footer() {
       </div>
 
       {/* Main footer */}
-      <div className="bg-linear-to-b from-brand-800 to-brand-900 text-brand-100">
+      <div className="bg-linear-to-b from-brand-800 to-brand-900 text-brand-100 ">
         <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
           <div className="grid gap-12 lg:grid-cols-12 lg:gap-8">
             {/* Brand */}
             <div className="lg:col-span-4">
-              <div className="inline-block rounded-xl bg-white px-3 py-2 shadow-sm">
-                <Logo type="full" width={1100} height={280} />
+              <div className="inline-block max-w-full rounded-xl bg-white px-3 py-2 shadow-sm ">
+                <Logo
+                  type="full"
+                  width={220}
+                  height={56}
+                  imageClassName="h-full w-auto max-w-full object-contain sm:h-20 md:h-24 text-center"
+                />
               </div>
               <p className="mt-5 max-w-sm text-sm leading-relaxed text-brand-100/80">
                 {site.description}
@@ -69,7 +74,7 @@ export function Footer() {
             </div>
 
             {/* Links */}
-            <div className="grid gap-10 sm:grid-cols-2 lg:col-span-5 lg:gap-8">
+            <div className="grid gap-10 grid-cols-2 lg:col-span-5 lg:gap-8">
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-white">
                   Company

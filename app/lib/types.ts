@@ -69,6 +69,8 @@ export type Availability = {
   hasSickLeave: boolean;
   hasAnnualLeave: boolean;
   hasPublicHolidayRate: boolean;
+  hasRegisteredVehicle: boolean;
+  vehicleRegistrationNumber: string;
 };
 
 // ─── Step 5: Compliance Documents ───────────────────────────────────────────
@@ -107,17 +109,185 @@ export type BankDetails = {
   paymentMethod: "bank-transfer" | "cheque";
 };
 
-// ─── Full Registration Payload ───────────────────────────────────────────────
-export type EmployeeRegistration = {
-  personal: PersonalDetails;
-  contact: ContactDetails;
-  workRights: WorkRights;
-  availability: Availability;
-  compliance: ComplianceDocs;
-  training: Training;
-  bank: BankDetails;
-  agreedToTerms: boolean;
+// ─── Full Registration Payload (flat — matches Prisma / API) ─────────────────
+export type EmployeeRegistration = PersonalDetails &
+  ContactDetails &
+  WorkRights &
+  Availability &
+  ComplianceDocs &
+  Training &
+  BankDetails & {
+    agreedToTerms: boolean;
+    submittedAt: string;
+    createdAt?: string;
+    updatedAt?: string;
+  };
+
+export type RegistrationStatus =
+  | "PENDING"
+  | "REVIEWING"
+  | "APPROVED"
+  | "REJECTED";
+
+export type JobStatus =
+  | "OPEN"
+  | "ASSIGNED"
+  | "IN_PROGRESS"
+  | "COMPLETED"
+  | "CANCELLED";
+
+export type InvoiceStatus =
+  | "DRAFT"
+  | "SENT"
+  | "PAID"
+  | "OVERDUE"
+  | "CANCELLED";
+
+export type PaymentStatus = "PENDING" | "COMPLETED" | "FAILED";
+
+export type EmployeeRecord = EmployeeRegistration & {
+  id: string;
+  status: RegistrationStatus;
+  createdAt: string;
+  updatedAt: string;
+  _count?: { jobs: number };
+};
+
+export type JobEmployeeSummary = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+};
+
+export type JobRecord = {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  address: string;
+  suburb: string;
+  state: string;
+  postcode: string;
+  scheduledDate: string | null;
+  startTime: string;
+  endTime: string;
+  payRate: string;
+  notes: string;
+  status: JobStatus;
+  employeeId: string | null;
+  employee?: JobEmployeeSummary | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type InvoiceRecord = {
+  id: string;
+  number: string;
+  amount: string;
+  status: InvoiceStatus;
+  dueDate: string | null;
+  notes: string;
+  employeeId: string;
+  jobId: string | null;
+  job: { id: string; title: string } | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PaymentRecord = {
+  id: string;
+  amount: string;
+  method: string;
+  status: PaymentStatus;
+  paidAt: string;
+  reference: string;
+  employeeId: string;
+  invoiceId: string | null;
+  invoice: { id: string; number: string } | null;
+  createdAt: string;
+};
+
+export type EmployeeDetailRecord = EmployeeRecord & {
+  jobs: JobRecord[];
+  invoices: InvoiceRecord[];
+  payments: PaymentRecord[];
+};
+
+export type CreateJobPayload = {
+  title: string;
+  category: string;
+  description: string;
+  address: string;
+  suburb: string;
+  state: string;
+  postcode: string;
+  scheduledDate: string;
+  startTime: string;
+  endTime: string;
+  payRate: string;
+  notes: string;
+  employeeId: string;
+};
+
+export type EmployeeListParams = {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  status?: RegistrationStatus | "";
+  workType?: WorkType | "";
+  visaStatus?: VisaStatus | "";
+  preferredDays?: string;
+  minPay?: string;
+  maxPay?: string;
+  willingToTravel?: boolean | "";
+  hasDriverLicense?: boolean | "";
+  hasPoliceCheck?: boolean | "";
+  hasWorkingWithChildren?: boolean | "";
+  yearsExperience?: string;
+};
+
+export type EmployeeListResponse = {
+  data: EmployeeRecord[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  message?: string;
+};
+
+export type EmployeeRow = {
+  id: string;
+  fullName: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  suburb: string;
+  state: string;
+  postcode: string;
+  gender: string;
+  visaStatus: string;
+  workType: string;
+  preferredDays: string;
+  preferredTimeSlots: string;
+  urgency: string;
+  expectedPayRate: string;
+  willingToTravel: boolean;
+  hasDriverLicense: boolean;
+  maxTravelKm: string;
+  hasPoliceCheck: boolean;
+  hasWorkingWithChildren: boolean;
+  hasPublicLiability: boolean;
+  hasCovidVaccination: boolean;
+  certifications: string;
+  machinesHandled: string;
+  specialisations: string;
+  yearsExperience: string;
+  status: RegistrationStatus;
+  jobsCount: number;
   submittedAt: string;
+  raw: EmployeeRecord;
 };
 
 // ─── Wizard Step Config ──────────────────────────────────────────────────────
