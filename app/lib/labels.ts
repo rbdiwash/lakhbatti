@@ -1,36 +1,32 @@
-import type {
-  DayOfWeek,
-  UrgencyLevel,
-  VisaStatus,
-  WorkType,
-} from "./types";
+import type { DayOfWeek, UrgencyLevel, VisaStatus, WorkType } from "./types";
 
 export type Option<T extends string> = { value: T; label: string };
 
-export const WORK_TYPE_OPTIONS: (Option<WorkType> & { description?: string })[] =
-  [
-    { value: "full-time", label: "Full-time", description: "38 hrs/week" },
-    {
-      value: "part-time",
-      label: "Part-time",
-      description: "Less than 38 hrs",
-    },
-    {
-      value: "casual",
-      label: "Casual",
-      description: "Flexible, as-needed shifts",
-    },
-    {
-      value: "independent-contractor",
-      label: "Independent Contractor",
-      description: "ABN required",
-    },
-    {
-      value: "company",
-      label: "Company",
-      description: "Registered business",
-    },
-  ];
+export const WORK_TYPE_OPTIONS: (Option<WorkType> & {
+  description?: string;
+})[] = [
+  { value: "full-time", label: "Full-time", description: "38 hrs/week" },
+  {
+    value: "part-time",
+    label: "Part-time",
+    description: "Less than 38 hrs",
+  },
+  {
+    value: "casual",
+    label: "Casual",
+    description: "Flexible, as-needed shifts",
+  },
+  {
+    value: "independent-contractor",
+    label: "Independent Contractor",
+    description: "ABN required",
+  },
+  {
+    value: "company",
+    label: "Company",
+    description: "Registered business",
+  },
+];
 
 export const VISA_OPTIONS: Option<VisaStatus>[] = [
   { value: "australian-citizen", label: "Australian Citizen" },
@@ -59,6 +55,13 @@ export const DAY_OPTIONS: Option<DayOfWeek>[] = [
   { value: "sunday", label: "Sunday" },
 ];
 
+export const TIME_SLOT_OPTIONS: Option<TimeSlot>[] = [
+  { value: "morning", label: "Morning" },
+  { value: "afternoon", label: "Afternoon" },
+  { value: "evening", label: "Evening" },
+  { value: "overnight", label: "Overnight" },
+];
+
 export const DAY_SHORT: Record<DayOfWeek, string> = {
   monday: "Mon",
   tuesday: "Tue",
@@ -73,7 +76,7 @@ function labelFromOptions<T extends string>(
   options: Option<T>[],
   value: string | null | undefined,
 ): string {
-  if (!value) return "—";
+  if (!value) return "-";
   return options.find((o) => o.value === value)?.label ?? humanizeSlug(value);
 }
 
@@ -106,7 +109,10 @@ export function labelPreferredDays(
   const list = Array.isArray(days)
     ? days
     : typeof days === "string" && days.trim()
-      ? days.split(",").map((d) => d.trim()).filter(Boolean)
+      ? days
+          .split(",")
+          .map((d) => d.trim())
+          .filter(Boolean)
       : [];
   if (list.length === 0) return "—";
   return list.map((d) => labelDay(d)).join(", ");
@@ -118,7 +124,10 @@ export function labelPreferredDaysShort(
   const list = Array.isArray(days)
     ? days
     : typeof days === "string" && days.trim()
-      ? days.split(",").map((d) => d.trim()).filter(Boolean)
+      ? days
+          .split(",")
+          .map((d) => d.trim())
+          .filter(Boolean)
       : [];
   if (list.length === 0) return "—";
   return list

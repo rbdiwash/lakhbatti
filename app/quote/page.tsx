@@ -10,9 +10,9 @@ export const metadata: Metadata = {
 };
 
 const perks = [
-  "Free & no-obligation",
-  "Takes under a minute",
-  "Quick response",
+  "Free digital quotes",
+  "On-site visits available",
+  "Call-out deducted from final invoice",
 ];
 
 export default function QuotePage() {

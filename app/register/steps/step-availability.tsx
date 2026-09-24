@@ -367,7 +367,7 @@ export function StepAvailability() {
       <div className="mt-6">
         <SectionDivider label="Travel & entitlements" />
       </div>
-      <div className="mt-6 grid gap-3 sm:grid-cols-3">
+      <div className="mt-6 grid gap-3 sm:grid-cols-1">
         <ToggleRow
           label="Willing to travel"
           description="Travel to different job sites"

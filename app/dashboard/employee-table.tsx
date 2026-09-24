@@ -24,6 +24,7 @@ import {
 } from "../lib/labels";
 import type { EmployeeRow, RegistrationStatus } from "../lib/types";
 import { JobFormDialog } from "./job-form-dialog";
+import Link from "next/link";
 
 const yesNo = (value: boolean) => (value ? "Yes" : "No");
 const BOTTOM_GAP = 24;
@@ -207,7 +208,19 @@ export function EmployeeTable({
 
   const columns = useMemo<MRT_ColumnDef<EmployeeRow>[]>(
     () => [
-      { accessorKey: "fullName", header: "Name", size: 180 },
+      {
+        accessorKey: "fullName",
+        header: "Name",
+        size: 180,
+        Cell: ({ row }) => (
+          <Link
+            href={`/dashboard/employees/${row.original.id}`}
+            className="hover:underline"
+          >
+            {row.original.fullName}
+          </Link>
+        ),
+      },
       { accessorKey: "email", header: "Email", size: 220 },
       { accessorKey: "phone", header: "Phone", size: 140 },
       { accessorKey: "state", header: "State", size: 90 },

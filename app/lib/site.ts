@@ -7,6 +7,8 @@ export const site = {
   email: "info@lakhbatti.com",
   address: "Marion Street, Bankstown, New South Wales, Australia",
   hours: "Mon – Fri: 9am – 5pm",
+  /** Charged for on-site quote visits; deducted from the final job invoice. */
+  callOutFeeAud: 49,
 };
 
 export const navLinks = [

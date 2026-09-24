@@ -7,6 +7,7 @@ import {
   DAY_SHORT,
   VISA_OPTIONS,
   WORK_TYPE_OPTIONS,
+  TIME_SLOT_OPTIONS,
 } from "../lib/labels";
 
 const EXPERIENCE_OPTIONS = ["0-1", "1-2", "2-5", "5-10", "10+"] as const;
@@ -29,6 +30,7 @@ export type EmployeeFilterState = {
   hasPoliceCheck: string;
   hasWorkingWithChildren: string;
   yearsExperience: string;
+  preferredTimeSlots: string[];
 };
 
 type FilterKey = Exclude<keyof EmployeeFilterState, "search">;
@@ -45,6 +47,7 @@ const FILTER_META: { key: FilterKey; label: string }[] = [
   { key: "hasPoliceCheck", label: "Police check" },
   { key: "hasWorkingWithChildren", label: "WWC" },
   { key: "preferredDays", label: "Preferred days" },
+  { key: "preferredTimeSlots", label: "Preferred time slots" },
 ];
 
 export const emptyEmployeeFilters: EmployeeFilterState = {
@@ -60,6 +63,7 @@ export const emptyEmployeeFilters: EmployeeFilterState = {
   hasPoliceCheck: "",
   hasWorkingWithChildren: "",
   yearsExperience: "",
+  preferredTimeSlots: [],
 };
 
 function emptyValueFor(key: FilterKey): string | string[] {
@@ -81,6 +85,9 @@ export function toListParams(
       undefined) as EmployeeListParams["visaStatus"],
     preferredDays: filters.preferredDays.length
       ? filters.preferredDays.join(",")
+      : undefined,
+    preferredTimeSlots: (filters.preferredTimeSlots || []).length
+      ? filters.preferredTimeSlots.join(",")
       : undefined,
     minPay: filters.minPay || undefined,
     maxPay: filters.maxPay || undefined,
@@ -164,12 +171,18 @@ export function EmployeeFilters({ value, onChange }: Props) {
   function patch(partial: Partial<EmployeeFilterState>) {
     onChange({ ...value, ...partial });
   }
-
   function toggleDay(day: string) {
     const selected = value.preferredDays.includes(day)
       ? value.preferredDays.filter((d) => d !== day)
       : [...value.preferredDays, day];
     patch({ preferredDays: selected });
+  }
+
+  function toggleTimeSlot(timeSlot: string) {
+    const selected = value?.preferredTimeSlots.includes(timeSlot)
+      ? value?.preferredTimeSlots.filter((t) => t !== timeSlot)
+      : [...value?.preferredTimeSlots, timeSlot];
+    patch({ preferredTimeSlots: selected });
   }
 
   function addFilter(key: FilterKey) {
@@ -386,6 +399,38 @@ export function EmployeeFilters({ value, onChange }: Props) {
                       }`}
                     >
                       {DAY_SHORT[day.value]}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </FilterChip>
+        );
+
+      case "preferredTimeSlots":
+        return (
+          <FilterChip key={key} label={meta.label} onRemove={remove}>
+            <div>
+              <p className="mb-1.5 text-xs font-medium text-zinc-600">
+                Preferred time slots
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {TIME_SLOT_OPTIONS.map((timeSlot) => {
+                  const timeSlotActive = value.preferredTimeSlots.includes(
+                    timeSlot.value,
+                  );
+                  return (
+                    <button
+                      key={timeSlot.value}
+                      type="button"
+                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                        timeSlotActive
+                          ? "bg-brand-600 text-white"
+                          : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                      }`}
+                      onClick={() => toggleTimeSlot(timeSlot.value)}
+                    >
+                      {timeSlot.label}
                     </button>
                   );
                 })}

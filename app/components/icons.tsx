@@ -19,4 +19,8 @@ export {
   LuRepeat as RepeatIcon,
   LuUser as UserIcon,
   LuArrowLeft as ArrowLeftIcon,
+  LuCamera as CameraIcon,
+  LuMonitor as MonitorIcon,
+  LuMapPin as SiteVisitIcon,
+  LuX as CloseIcon,
 } from "react-icons/lu";

@@ -1,24 +1,40 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { ComponentType } from "react";
 import {
   ArrowLeftIcon,
   BuildingIcon,
   CalendarIcon,
+  CameraIcon,
   CheckIcon,
+  CloseIcon,
   DotsIcon,
   HomeIcon,
   LeafIcon,
+  MonitorIcon,
   RepeatIcon,
   ScissorsIcon,
+  SiteVisitIcon,
   SparkleIcon,
   UserIcon,
 } from "./icons";
+import { getPricing, submitQuote } from "../lib/api";
+import { site } from "../lib/site";
+import type { CreateQuotePayload } from "../lib/types";
 
 type IconType = ComponentType<{ className?: string }>;
 
 type ListField = "areas" | "gardenTasks" | "mowingExtras";
+
+type QuoteMode = "" | "digital" | "site-visit";
+
+type QuoteImage = {
+  id: string;
+  file: File;
+  previewUrl: string;
+};
 
 type StepErrors = {
   areas?: string;
@@ -26,6 +42,10 @@ type StepErrors = {
   gardenSize?: string;
   dateFrom?: string;
   frequency?: string;
+  quoteMode?: string;
+  images?: string;
+  callOutAccepted?: string;
+  address?: string;
 };
 
 type QuoteData = {
@@ -47,6 +67,8 @@ type QuoteData = {
   dateFrom: string;
   dateTo: string;
   frequency: string;
+  quoteMode: QuoteMode;
+  callOutAccepted: boolean;
   name: string;
   email: string;
   phone: string;
@@ -68,14 +90,27 @@ const initialData: QuoteData = {
   dateFrom: "",
   dateTo: "",
   frequency: "",
+  quoteMode: "",
+  callOutAccepted: false,
   name: "",
   email: "",
   phone: "",
   address: "",
 };
 
-// Each category has its own sequence of steps. "category", "schedule" and
-// "contact" are shared; the middle steps are specific to the service.
+// Call-out terms come from Settings → Pricing; the site default covers the
+// moment before they load (or if the API is unreachable).
+type CallOutTerms = { fee: number; deductible: boolean };
+const DEFAULT_CALL_OUT: CallOutTerms = {
+  fee: site.callOutFeeAud,
+  deductible: true,
+};
+const MAX_IMAGES = 8;
+const MAX_IMAGE_MB = 5;
+
+// Each category has its own sequence of steps. "category", "schedule",
+// "quoteMode", "quoteDetails" and "contact" are shared; the middle steps
+// are specific to the service.
 const flows: Record<string, string[]> = {
   Cleaning: [
     "category",
@@ -83,6 +118,8 @@ const flows: Record<string, string[]> = {
     "property",
     "areas",
     "schedule",
+    "quoteMode",
+    "quoteDetails",
     "contact",
   ],
   Gardening: [
@@ -90,9 +127,19 @@ const flows: Record<string, string[]> = {
     "gardeningType",
     "gardenDetails",
     "schedule",
+    "quoteMode",
+    "quoteDetails",
     "contact",
   ],
-  Mowing: ["category", "lawnSize", "mowingExtras", "schedule", "contact"],
+  Mowing: [
+    "category",
+    "lawnSize",
+    "mowingExtras",
+    "schedule",
+    "quoteMode",
+    "quoteDetails",
+    "contact",
+  ],
 };
 
 const titles: Record<string, string> = {
@@ -105,6 +152,8 @@ const titles: Record<string, string> = {
   lawnSize: "Lawn size",
   mowingExtras: "Mowing extras",
   schedule: "When works for you?",
+  quoteMode: "How should we quote?",
+  quoteDetails: "Quote details",
   contact: "Your details",
 };
 
@@ -182,24 +231,54 @@ const frequencies = ["One-off", "Weekly", "Fortnightly", "Monthly"];
 // Web3Forms access key (https://web3forms.com) — safe to expose in the client.
 // Add it to .env.local as NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY and restart `next dev`.
 const WEB3FORMS_ACCESS_KEY = process.env.NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY;
-console.log(process.env.NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY);
 
 const inputClass =
   "w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100";
 const labelClass = "block text-sm font-medium text-zinc-700";
 
 export function QuoteForm() {
+  const pricingQuery = useQuery({
+    queryKey: ["settings", "pricing"],
+    queryFn: getPricing,
+    retry: false,
+    staleTime: 5 * 60_000,
+  });
+  const callOutSettings = pricingQuery.data?.config.callOut;
+  const callOut: CallOutTerms = callOutSettings
+    ? {
+        fee: callOutSettings.enabled ? callOutSettings.amount : 0,
+        deductible: callOutSettings.deductible,
+      }
+    : DEFAULT_CALL_OUT;
+  const callOutFee = callOut.fee;
+  const freeVisit = callOutFee <= 0;
+  const deductedText = callOut.deductible
+    ? " and is deducted from your final invoice"
+    : "";
+
   const [step, setStep] = useState(0);
   const [data, setData] = useState<QuoteData>(initialData);
+  const [images, setImages] = useState<QuoteImage[]>([]);
   const [submitted, setSubmitted] = useState(false);
-  const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
+  const [errors, setErrors] = useState<{
+    name?: string;
+    email?: string;
+    address?: string;
+  }>({});
   const [stepErrors, setStepErrors] = useState<StepErrors>({});
   const [sending, setSending] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const otherRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const flow = flows[data.category] ?? flows.Cleaning;
   const currentKey = flow[Math.min(step, flow.length - 1)];
+  const quoteDetailsTitle =
+    data.quoteMode === "digital"
+      ? "Upload photos"
+      : data.quoteMode === "site-visit"
+        ? "Call-out fee"
+        : titles.quoteDetails;
 
   function update(partial: Partial<QuoteData>) {
     setStepErrors({});
@@ -214,6 +293,13 @@ export function QuoteForm() {
   function back() {
     setStepErrors({});
     setStep((s) => Math.max(s - 1, 0));
+  }
+
+  function clearImages() {
+    setImages((current) => {
+      current.forEach((image) => URL.revokeObjectURL(image.previewUrl));
+      return [];
+    });
   }
 
   function validateStep(key: string): boolean {
@@ -236,6 +322,27 @@ export function QuoteForm() {
       if (!data.dateFrom) errs.dateFrom = "Please choose a preferred date.";
       if (!data.frequency)
         errs.frequency = "Please select how often you need the service.";
+    }
+
+    if (key === "quoteMode" && !data.quoteMode) {
+      errs.quoteMode = "Please choose how you'd like to receive a quote.";
+    }
+
+    if (key === "quoteDetails") {
+      if (data.quoteMode === "digital" && images.length === 0) {
+        errs.images = "Please upload at least one photo of the space.";
+      }
+      if (
+        data.quoteMode === "site-visit" &&
+        !freeVisit &&
+        !data.callOutAccepted
+      ) {
+        errs.callOutAccepted =
+          "Please confirm you understand the call-out fee to continue.";
+      }
+      if (!data.quoteMode) {
+        errs.quoteMode = "Please choose a quote option first.";
+      }
     }
 
     setStepErrors(errs);
@@ -264,57 +371,107 @@ export function QuoteForm() {
     setStep(1);
   }
 
+  function selectQuoteMode(mode: Exclude<QuoteMode, "">) {
+    update({
+      quoteMode: mode,
+      callOutAccepted: mode === "site-visit" ? data.callOutAccepted : false,
+    });
+    if (mode === "site-visit") {
+      clearImages();
+    }
+    setStep((s) => Math.min(s + 1, flow.length - 1));
+  }
+
+  function handleImageSelect(event: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? []);
+    event.target.value = "";
+    if (files.length === 0) return;
+
+    setStepErrors((prev) => ({ ...prev, images: undefined }));
+
+    const remaining = MAX_IMAGES - images.length;
+    if (remaining <= 0) {
+      setStepErrors((prev) => ({
+        ...prev,
+        images: `You can upload up to ${MAX_IMAGES} photos.`,
+      }));
+      return;
+    }
+
+    const accepted: QuoteImage[] = [];
+    let rejected = false;
+
+    for (const file of files.slice(0, remaining)) {
+      if (!file.type.startsWith("image/")) {
+        rejected = true;
+        continue;
+      }
+      if (file.size > MAX_IMAGE_MB * 1024 * 1024) {
+        rejected = true;
+        continue;
+      }
+      accepted.push({
+        id: `${file.name}-${file.size}-${file.lastModified}-${Math.random()}`,
+        file,
+        previewUrl: URL.createObjectURL(file),
+      });
+    }
+
+    if (accepted.length) {
+      setImages((current) => [...current, ...accepted]);
+    }
+    if (rejected || files.length > remaining) {
+      setStepErrors((prev) => ({
+        ...prev,
+        images: `Only image files under ${MAX_IMAGE_MB}MB are accepted (max ${MAX_IMAGES}).`,
+      }));
+    }
+  }
+
+  function removeImage(id: string) {
+    setImages((current) => {
+      const target = current.find((image) => image.id === id);
+      if (target) URL.revokeObjectURL(target.previewUrl);
+      return current.filter((image) => image.id !== id);
+    });
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const nextErrors: { name?: string; email?: string } = {};
+    const nextErrors: { name?: string; email?: string; address?: string } = {};
     if (!data.name.trim()) nextErrors.name = "Please enter your name.";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email))
       nextErrors.email = "Please enter a valid email.";
+    if (data.quoteMode === "site-visit" && !data.address.trim()) {
+      nextErrors.address = "Please enter the visit address.";
+    }
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
-
-    if (!WEB3FORMS_ACCESS_KEY) {
-      setSubmitError(
-        "Email service isn't configured yet. Please call us or try again later.",
-      );
-      return;
-    }
 
     setSending(true);
     setSubmitError(null);
     try {
-      const response = await fetch("https://api.web3forms.com/submit", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          access_key: WEB3FORMS_ACCESS_KEY,
-          subject: `New ${data.category || "service"} quote request — ${data.name}`,
-          from_name: "Lakhbatti Website",
-          replyto: data.email,
-          ...buildEmailFields(data),
-        }),
-      });
-      const result = await response.json();
-      if (result.success) {
+      // Save to the dashboard and email the team in parallel; the request
+      // counts as received if either one succeeds.
+      const [saved, emailed] = await Promise.allSettled([
+        saveQuote(data, images),
+        sendQuoteEmail(data, images, callOut),
+      ]);
+      if (saved.status === "fulfilled" || emailed.status === "fulfilled") {
         setSubmitted(true);
+        clearImages();
       } else {
         setSubmitError(
           "Sorry, we couldn't send your request. Please try again or call us.",
         );
       }
-    } catch {
-      setSubmitError(
-        "Network error. Please check your connection and try again.",
-      );
     } finally {
       setSending(false);
     }
   }
 
   function reset() {
+    clearImages();
     setData(initialData);
     setErrors({});
     setStepErrors({});
@@ -324,7 +481,7 @@ export function QuoteForm() {
   }
 
   if (submitted) {
-    return <SuccessView data={data} onReset={reset} />;
+    return <SuccessView data={data} callOut={callOut} onReset={reset} />;
   }
 
   return (
@@ -335,7 +492,11 @@ export function QuoteForm() {
           <span>
             Step {step + 1} of {flow.length}
           </span>
-          <span>{titles[currentKey]}</span>
+          <span>
+            {currentKey === "quoteDetails"
+              ? quoteDetailsTitle
+              : titles[currentKey]}
+          </span>
         </div>
         <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-zinc-100">
           <div
@@ -530,7 +691,9 @@ export function QuoteForm() {
             ))}
           </div>
           {stepErrors.gardenTasks && (
-            <p className="mt-2 text-xs text-red-500">{stepErrors.gardenTasks}</p>
+            <p className="mt-2 text-xs text-red-500">
+              {stepErrors.gardenTasks}
+            </p>
           )}
 
           <div className="mt-6">
@@ -548,7 +711,9 @@ export function QuoteForm() {
               ))}
             </div>
             {stepErrors.gardenSize && (
-              <p className="mt-2 text-xs text-red-500">{stepErrors.gardenSize}</p>
+              <p className="mt-2 text-xs text-red-500">
+                {stepErrors.gardenSize}
+              </p>
             )}
           </div>
 
@@ -617,7 +782,9 @@ export function QuoteForm() {
                 className={`mt-1.5 ${inputClass}`}
               />
               {stepErrors.dateFrom && (
-                <p className="mt-1 text-xs text-red-500">{stepErrors.dateFrom}</p>
+                <p className="mt-1 text-xs text-red-500">
+                  {stepErrors.dateFrom}
+                </p>
               )}
             </div>
             <div>
@@ -649,7 +816,9 @@ export function QuoteForm() {
               ))}
             </div>
             {stepErrors.frequency && (
-              <p className="mt-2 text-xs text-red-500">{stepErrors.frequency}</p>
+              <p className="mt-2 text-xs text-red-500">
+                {stepErrors.frequency}
+              </p>
             )}
           </div>
 
@@ -657,11 +826,193 @@ export function QuoteForm() {
         </Step>
       )}
 
+      {/* Quote mode: digital vs site visit */}
+      {currentKey === "quoteMode" && (
+        <Step
+          title={titles.quoteMode}
+          subtitle="Choose a digital quote from photos, or book an on-site visit."
+        >
+          <div className="grid gap-3">
+            <OptionCard
+              icon={MonitorIcon}
+              title="Digital quote"
+              description="Upload photos and we'll email an estimate — no visit needed."
+              selected={data.quoteMode === "digital"}
+              onClick={() => selectQuoteMode("digital")}
+            />
+            <OptionCard
+              icon={SiteVisitIcon}
+              title="On-site visit"
+              description={
+                freeVisit
+                  ? "We'll come to the property to quote — free of charge."
+                  : `We'll come to the property. A $${callOutFee} call-out fee applies${deductedText}.`
+              }
+              selected={data.quoteMode === "site-visit"}
+              onClick={() => selectQuoteMode("site-visit")}
+            />
+          </div>
+          {stepErrors.quoteMode && (
+            <p className="mt-3 text-xs text-red-500">{stepErrors.quoteMode}</p>
+          )}
+        </Step>
+      )}
+
+      {/* Quote details: photos OR call-out fee */}
+      {currentKey === "quoteDetails" && data.quoteMode === "digital" && (
+        <Step
+          title="Upload photos"
+          subtitle="Clear photos of the space help us quote accurately."
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={handleImageSelect}
+          />
+
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 px-4 py-8 text-center transition-colors hover:border-brand-400 hover:bg-brand-50/40"
+          >
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+              <CameraIcon className="h-5 w-5" />
+            </span>
+            <span className="text-sm font-semibold text-zinc-900">
+              Add photos
+            </span>
+            <span className="text-xs text-zinc-500">
+              Up to {MAX_IMAGES} images · max {MAX_IMAGE_MB}MB each
+            </span>
+          </button>
+
+          {images.length > 0 && (
+            <ul className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
+              {images.map((image) => (
+                <li
+                  key={image.id}
+                  className="relative overflow-hidden rounded-xl border border-zinc-200"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={image.previewUrl}
+                    alt={image.file.name}
+                    className="aspect-square w-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(image.id)}
+                    aria-label={`Remove ${image.file.name}`}
+                    className="absolute top-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-zinc-900/70 text-white hover:bg-zinc-900"
+                  >
+                    <CloseIcon className="h-3.5 w-3.5" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {stepErrors.images && (
+            <p className="mt-3 text-xs text-red-500">{stepErrors.images}</p>
+          )}
+
+          <NextButton onClick={tryNext} />
+        </Step>
+      )}
+
+      {currentKey === "quoteDetails" && data.quoteMode === "site-visit" && (
+        <Step
+          title={freeVisit ? "Site visit" : "Call-out fee"}
+          subtitle="We'll inspect the property in person before confirming your quote."
+        >
+          {freeVisit ? (
+            <div className="rounded-2xl border border-brand-100 bg-brand-50/60 p-4">
+              <p className="text-sm font-semibold text-zinc-900">
+                Free on-site quote
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-zinc-600">
+                Our team will visit to assess the job — there&apos;s no charge
+                for the visit.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="rounded-2xl border border-brand-100 bg-brand-50/60 p-4">
+                <p className="text-sm font-semibold text-zinc-900">
+                  ${callOutFee} call-out fee
+                </p>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-600">
+                  This covers our team visiting the site to assess the job.
+                  {callOut.deductible ? (
+                    <>
+                      {" "}
+                      When you book the work with us, the ${callOutFee} is{" "}
+                      <span className="font-medium text-zinc-800">
+                        deducted from your final invoice
+                      </span>
+                      .
+                    </>
+                  ) : null}
+                </p>
+              </div>
+
+              <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-2xl border border-zinc-200 p-4 hover:border-brand-300">
+                <input
+                  type="checkbox"
+                  checked={data.callOutAccepted}
+                  onChange={(e) =>
+                    update({ callOutAccepted: e.target.checked })
+                  }
+                  className="mt-1 h-4 w-4 rounded border-zinc-300 text-brand-600 focus:ring-brand-500"
+                />
+                <span className="text-sm text-zinc-700">
+                  I understand a ${callOutFee} call-out fee applies for the site
+                  visit
+                  {callOut.deductible
+                    ? " and will be deducted after the job is completed"
+                    : ""}
+                  .
+                </span>
+              </label>
+              {stepErrors.callOutAccepted && (
+                <p className="mt-2 text-xs text-red-500">
+                  {stepErrors.callOutAccepted}
+                </p>
+              )}
+            </>
+          )}
+
+          <NextButton onClick={tryNext} />
+        </Step>
+      )}
+
+      {currentKey === "quoteDetails" && !data.quoteMode && (
+        <Step
+          title={titles.quoteDetails}
+          subtitle="Please go back and choose how you'd like to be quoted."
+        >
+          <button
+            type="button"
+            onClick={back}
+            className="mt-2 w-full rounded-full bg-brand-600 px-6 py-3.5 text-sm font-semibold text-white hover:bg-brand-700"
+          >
+            Choose quote type
+          </button>
+        </Step>
+      )}
+
       {/* Contact (shared) */}
       {currentKey === "contact" && (
         <Step
           title={titles.contact}
-          subtitle="Almost done — where should we send your quote?"
+          subtitle={
+            data.quoteMode === "site-visit"
+              ? "Almost done — where should we visit and send confirmation?"
+              : "Almost done — where should we send your quote?"
+          }
         >
           <form onSubmit={handleSubmit} className="grid gap-4">
             <div>
@@ -713,17 +1064,42 @@ export function QuoteForm() {
             </div>
             <div>
               <label htmlFor="address" className={labelClass}>
-                Address (optional)
+                Address{" "}
+                {data.quoteMode === "site-visit" ? (
+                  <span className="text-brand-600">*</span>
+                ) : (
+                  <span className="font-normal text-zinc-400">(optional)</span>
+                )}
               </label>
               <input
                 id="address"
                 type="text"
+                required={data.quoteMode === "site-visit"}
                 value={data.address}
                 onChange={(e) => update({ address: e.target.value })}
                 placeholder="Street, suburb"
                 className={`mt-1.5 ${inputClass}`}
               />
+              {errors.address && (
+                <p className="mt-1 text-xs text-red-500">{errors.address}</p>
+              )}
             </div>
+
+            {data.quoteMode === "digital" && (
+              <p className="rounded-xl bg-zinc-50 px-4 py-3 text-xs text-zinc-600">
+                Digital quote · {images.length} photo
+                {images.length === 1 ? "" : "s"} attached
+              </p>
+            )}
+            {data.quoteMode === "site-visit" && (
+              <p className="rounded-xl bg-brand-50 px-4 py-3 text-xs text-brand-800">
+                {freeVisit
+                  ? "On-site visit · free of charge"
+                  : `On-site visit · $${callOutFee} call-out fee${
+                      callOut.deductible ? " (deducted from final invoice)" : ""
+                    }`}
+              </p>
+            )}
 
             {submitError && (
               <p className="rounded-xl bg-red-50 px-4 py-3 text-center text-sm text-red-600">
@@ -954,8 +1330,104 @@ function NextButton({
   );
 }
 
+async function saveQuote(data: QuoteData, images: QuoteImage[]) {
+  const payload: CreateQuotePayload = {
+    category: data.category || "Cleaning",
+    serviceType: serviceTypeOf(data),
+    details: serviceDetailsOf(data),
+    dateFrom: data.dateFrom,
+    dateTo: data.dateTo,
+    frequency: data.frequency,
+    quoteMode: data.quoteMode,
+    callOutAccepted: data.callOutAccepted,
+    name: data.name.trim(),
+    email: data.email.trim(),
+    phone: data.phone.trim(),
+    address: data.address.trim(),
+    images:
+      data.quoteMode === "digital"
+        ? await Promise.all(images.map((image) => compressImage(image.file)))
+        : [],
+  };
+  return submitQuote(payload);
+}
+
+async function sendQuoteEmail(
+  data: QuoteData,
+  images: QuoteImage[],
+  callOut: CallOutTerms,
+) {
+  if (!WEB3FORMS_ACCESS_KEY) throw new Error("Web3Forms is not configured");
+
+  const formData = new FormData();
+  formData.append("access_key", WEB3FORMS_ACCESS_KEY);
+  formData.append(
+    "subject",
+    `New ${data.category || "service"} quote request — ${data.name}`,
+  );
+  formData.append("from_name", "Lakhbatti Website");
+  formData.append("replyto", data.email);
+
+  const fields = buildEmailFields(data, images, callOut);
+  Object.entries(fields).forEach(([key, value]) => {
+    formData.append(key, value);
+  });
+
+  images.forEach((image, index) => {
+    formData.append(`attachment_${index + 1}`, image.file, image.file.name);
+  });
+
+  const response = await fetch("https://api.web3forms.com/submit", {
+    method: "POST",
+    body: formData,
+  });
+  const result = await response.json();
+  if (!result.success) throw new Error("Web3Forms rejected the request");
+}
+
+function serviceTypeOf(data: QuoteData) {
+  if (data.category === "Gardening") return data.gardeningType;
+  if (data.category === "Mowing") return "Lawn Mowing";
+  return data.cleaningType;
+}
+
+function serviceDetailsOf(data: QuoteData): CreateQuotePayload["details"] {
+  if (data.category === "Gardening") {
+    return { tasks: data.gardenTasks, gardenSize: data.gardenSize };
+  }
+  if (data.category === "Mowing") {
+    return { lawnSize: data.lawnSize, extras: data.mowingExtras };
+  }
+  return {
+    property:
+      data.property === "Other" ? data.propertyOther || "Other" : data.property,
+    areas: data.areas,
+    rooms: data.rooms,
+  };
+}
+
+// Downscale photos to keep the saved quote small (phone photos are often 5MB+).
+async function compressImage(
+  file: File,
+  maxSize = 1600,
+  quality = 0.8,
+): Promise<string> {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, maxSize / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  canvas.getContext("2d")?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  return canvas.toDataURL("image/jpeg", quality);
+}
+
 // Flat, human-readable fields for the quote email (sent via Web3Forms).
-function buildEmailFields(data: QuoteData): Record<string, string> {
+function buildEmailFields(
+  data: QuoteData,
+  images: QuoteImage[],
+  callOut: CallOutTerms,
+): Record<string, string> {
   const fields: Record<string, string> = {
     Service: data.category,
     Name: data.name,
@@ -965,7 +1437,33 @@ function buildEmailFields(data: QuoteData): Record<string, string> {
     "Preferred dates":
       [data.dateFrom, data.dateTo].filter(Boolean).join(" → ") || "Flexible",
     Frequency: data.frequency || "One-off",
+    "Quote type":
+      data.quoteMode === "digital"
+        ? "Digital (photos)"
+        : data.quoteMode === "site-visit"
+          ? "On-site visit"
+          : "—",
   };
+
+  if (data.quoteMode === "digital") {
+    fields["Photos uploaded"] = String(images.length);
+    fields["Photo names"] =
+      images.map((image) => image.file.name).join(", ") || "—";
+  }
+
+  if (data.quoteMode === "site-visit") {
+    fields["Call-out fee"] =
+      callOut.fee <= 0
+        ? "None (free site visit)"
+        : `$${callOut.fee} AUD${
+            callOut.deductible
+              ? " (deducted from final invoice after the job)"
+              : ""
+          }`;
+    if (callOut.fee > 0) {
+      fields["Call-out accepted"] = data.callOutAccepted ? "Yes" : "No";
+    }
+  }
 
   if (data.category === "Gardening") {
     fields["Gardening type"] = data.gardeningType;
@@ -991,8 +1489,23 @@ function buildEmailFields(data: QuoteData): Record<string, string> {
 
 function buildSummary(
   data: QuoteData,
+  callOut: CallOutTerms,
 ): { label: string; value: string; icon: IconType }[] {
+  const quoteType =
+    data.quoteMode === "digital"
+      ? "Digital quote (photos)"
+      : data.quoteMode === "site-visit"
+        ? callOut.fee > 0
+          ? `On-site visit ($${callOut.fee} call-out)`
+          : "On-site visit (free)"
+        : "—";
+
   const shared: { label: string; value: string; icon: IconType }[] = [
+    {
+      label: "Quote",
+      value: quoteType,
+      icon: data.quoteMode === "site-visit" ? SiteVisitIcon : MonitorIcon,
+    },
     {
       label: "When",
       value:
@@ -1062,12 +1575,15 @@ function buildSummary(
 
 function SuccessView({
   data,
+  callOut,
   onReset,
 }: {
   data: QuoteData;
+  callOut: CallOutTerms;
   onReset: () => void;
 }) {
-  const summary = buildSummary(data);
+  const summary = buildSummary(data, callOut);
+  const isSiteVisit = data.quoteMode === "site-visit";
 
   return (
     <div className="rounded-3xl border border-brand-100 bg-white p-6 shadow-sm sm:p-8">
@@ -1079,9 +1595,23 @@ function SuccessView({
           Thanks, {data.name.split(" ")[0] || "there"}!
         </h2>
         <p className="mx-auto mt-2 max-w-md text-zinc-600">
-          We&apos;ve got your request and will email a tailored quote to{" "}
-          <span className="font-medium text-zinc-900">{data.email}</span>{" "}
-          shortly.
+          {isSiteVisit ? (
+            <>
+              We&apos;ve received your site-visit request. Our team will be in
+              touch at{" "}
+              <span className="font-medium text-zinc-900">{data.email}</span> to
+              confirm a time.
+              {callOut.fee > 0 && callOut.deductible
+                ? ` The $${callOut.fee} call-out fee will be deducted from your final invoice once the job is done.`
+                : ""}
+            </>
+          ) : (
+            <>
+              We&apos;ve got your photos and will email a tailored quote to{" "}
+              <span className="font-medium text-zinc-900">{data.email}</span>{" "}
+              shortly.
+            </>
+          )}
         </p>
       </div>
 

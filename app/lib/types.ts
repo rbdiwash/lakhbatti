@@ -1,7 +1,12 @@
 // ─── Employee Registration Types ────────────────────────────────────────────
 // All fields across the 8-step registration wizard.
 
-export type WorkType = "full-time" | "part-time" | "casual" | "independent-contractor" | "company";
+export type WorkType =
+  | "full-time"
+  | "part-time"
+  | "casual"
+  | "independent-contractor"
+  | "company";
 
 export type VisaStatus =
   | "australian-citizen"
@@ -11,9 +16,21 @@ export type VisaStatus =
   | "working-holiday"
   | "other";
 
-export type UrgencyLevel = "immediately" | "within-1-week" | "within-2-weeks" | "within-1-month" | "flexible";
+export type UrgencyLevel =
+  | "immediately"
+  | "within-1-week"
+  | "within-2-weeks"
+  | "within-1-month"
+  | "flexible";
 
-export type DayOfWeek = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday";
+export type DayOfWeek =
+  | "monday"
+  | "tuesday"
+  | "wednesday"
+  | "thursday"
+  | "friday"
+  | "saturday"
+  | "sunday";
 
 export type TimeRange = { from: string; to: string };
 
@@ -45,10 +62,10 @@ export type ContactDetails = {
 // ─── Step 3: Work Rights & Visa ─────────────────────────────────────────────
 export type WorkRights = {
   visaStatus: VisaStatus;
-  visaOther: string;          // Only used when visaStatus === "other"
-  visaExpiry: string;          // date string, empty if citizen/PR
+  visaOther: string; // Only used when visaStatus === "other"
+  visaExpiry: string; // date string, empty if citizen/PR
   hasWorkingRights: boolean;
-  tfn: string;                 // Tax File Number
+  tfn: string; // Tax File Number
   hasAbn: boolean;
   abn: string;
 };
@@ -62,7 +79,7 @@ export type Availability = {
   preferredTimeSlots: TimeSlot[];
   daySlots: Partial<Record<DayOfWeek, TimeRange[]>>; // Exact availability windows per day
   urgency: UrgencyLevel;
-  expectedPayRate: string;     // e.g. "25.50" per hour
+  expectedPayRate: string; // e.g. "25.50" per hour
   willingToTravel: boolean;
   hasDriverLicense: boolean;
   maxTravelKm: string;
@@ -82,13 +99,13 @@ export type ComplianceDocs = {
   hasPublicLiability: boolean;
   insuranceExpiry: string;
   hasCovidVaccination: boolean;
-  otherDocs: string;           // free-text, e.g. "OH&S cert"
+  otherDocs: string; // free-text, e.g. "OH&S cert"
 };
 
 // ─── Step 6: Training & Equipment ───────────────────────────────────────────
 export type Training = {
-  certifications: string[];    // multi-select list
-  machinesHandled: string[];   // multi-select list
+  certifications: string[]; // multi-select list
+  machinesHandled: string[]; // multi-select list
   yearsExperience: string;
   specialisations: string[];
   references: {
@@ -136,12 +153,7 @@ export type JobStatus =
   | "COMPLETED"
   | "CANCELLED";
 
-export type InvoiceStatus =
-  | "DRAFT"
-  | "SENT"
-  | "PAID"
-  | "OVERDUE"
-  | "CANCELLED";
+export type InvoiceStatus = "DRAFT" | "SENT" | "PAID" | "OVERDUE" | "CANCELLED";
 
 export type PaymentStatus = "PENDING" | "COMPLETED" | "FAILED";
 
@@ -296,4 +308,291 @@ export type StepConfig = {
   title: string;
   description: string;
   icon: string;
+};
+
+// ─── Admin / Settings ────────────────────────────────────────────────────────
+export type AdminProfile = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: "ADMIN" | "STAFF";
+  jobTitle: string;
+  avatarUrl: string;
+  updatedAt?: string;
+};
+
+export type UpdateAdminProfilePayload = {
+  name: string;
+  email: string;
+  phone: string;
+  jobTitle: string;
+};
+
+export type ChangePasswordPayload = {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+};
+
+export type CallOutFeeSettings = {
+  amount: number;
+  currency: "AUD";
+  /** Shown on the public quote form */
+  enabled: boolean;
+  notes: string;
+  updatedAt?: string;
+};
+
+export type UpdateCallOutFeePayload = {
+  amount: number;
+  enabled: boolean;
+  notes: string;
+};
+
+export type CompanyProfileSettings = {
+  legalName: string;
+  tradingName: string;
+  abn: string;
+  email: string;
+  phone: string;
+  website: string;
+  address: string;
+  suburb: string;
+  state: string;
+  postcode: string;
+  logoUrl: string;
+  about: string;
+  updatedAt?: string;
+};
+
+export type EmailConfigSettings = {
+  fromName: string;
+  fromEmail: string;
+  replyToEmail: string;
+  smtpHost: string;
+  smtpPort: number;
+  smtpUser: string;
+  /** Write-only on update; never returned from GET */
+  smtpPasswordSet: boolean;
+  useTls: boolean;
+  quoteNotificationEmail: string;
+  updatedAt?: string;
+};
+
+export type UpdateEmailConfigPayload = {
+  fromName: string;
+  fromEmail: string;
+  replyToEmail: string;
+  smtpHost: string;
+  smtpPort: number;
+  smtpUser: string;
+  smtpPassword?: string;
+  useTls: boolean;
+  quoteNotificationEmail: string;
+};
+
+export type NotificationSettings = {
+  emailOnNewQuote: boolean;
+  emailOnNewEmployee: boolean;
+  emailOnJobAssigned: boolean;
+  emailOnJobCompleted: boolean;
+  smsOnNewQuote: boolean;
+  smsOnJobReminder: boolean;
+  dailyDigest: boolean;
+  digestTime: string;
+  updatedAt?: string;
+};
+
+export type BusinessHoursDay = {
+  day: string;
+  closed: boolean;
+  open: string;
+  close: string;
+};
+
+export type BusinessHoursSettings = {
+  timezone: string;
+  days: BusinessHoursDay[];
+  updatedAt?: string;
+};
+
+export type RegionalSettings = {
+  timezone: string;
+  currency: "AUD";
+  dateFormat: "DD/MM/YYYY" | "MM/DD/YYYY" | "YYYY-MM-DD";
+  timeFormat: "12h" | "24h";
+  locale: string;
+  distanceUnit: "km" | "mi";
+  updatedAt?: string;
+};
+
+export type SecuritySettings = {
+  sessionTimeoutMinutes: number;
+  requireStrongPassword: boolean;
+  twoFactorEnabled: boolean;
+  loginAlerts: boolean;
+  updatedAt?: string;
+};
+
+export type BillingSettings = {
+  planName: string;
+  status: "ACTIVE" | "TRIAL" | "PAST_DUE" | "CANCELLED";
+  billingEmail: string;
+  nextBillingDate: string | null;
+  updatedAt?: string;
+};
+
+export type IntegrationSettings = {
+  web3formsEnabled: boolean;
+  googleMapsEnabled: boolean;
+  stripeEnabled: boolean;
+  slackWebhookEnabled: boolean;
+  notes: string;
+  updatedAt?: string;
+};
+
+// ─── Quotes (from the public website quote form) ─────────────────────────────
+
+export type QuoteStatus =
+  | "NEW"
+  | "CONTACTED"
+  | "QUOTED"
+  | "ACCEPTED"
+  | "DECLINED";
+
+export type QuoteMode = "digital" | "site-visit" | "";
+
+export type QuoteDetails = Record<string, string | number | string[]>;
+
+export type QuoteRecord = {
+  id: string;
+  category: string;
+  serviceType: string;
+  details: QuoteDetails;
+  dateFrom: string;
+  dateTo: string;
+  frequency: string;
+  quoteMode: QuoteMode;
+  callOutAccepted: boolean;
+  callOutFee: number | null;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  imageCount: number;
+  status: QuoteStatus;
+  quotedAmount: string;
+  adminNotes: string;
+  jobId: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type QuoteDetailRecord = QuoteRecord & {
+  images: string[];
+  job: { id: string; title: string; status: JobStatus } | null;
+};
+
+export type CreateQuotePayload = {
+  category: string;
+  serviceType: string;
+  details: QuoteDetails;
+  dateFrom: string;
+  dateTo: string;
+  frequency: string;
+  quoteMode: QuoteMode;
+  callOutAccepted: boolean;
+    name: string;
+  email: string;
+  phone: string;
+  address: string;
+  images: string[];
+};
+
+export type UpdateQuotePayload = Partial<
+  Pick<QuoteRecord, "status" | "quotedAmount" | "adminNotes">
+>;
+
+// ─── Pricing (mirror of lakhbatti-backend/src/lib/pricing.ts) ────────────────
+
+export type PriceUnit = "flat" | "per_item" | "per_room" | "per_hour" | "per_sqm";
+
+export type PriceItem = {
+  id: string;
+  name: string;
+  price: number;
+  unit: PriceUnit;
+  enabled: boolean;
+};
+
+export type PricingConfig = {
+  general: {
+    gstRegistered: boolean;
+    gstRate: number;
+    pricesIncludeGst: boolean;
+    minimumCharge: number;
+    roundTo: number;
+    quoteValidityDays: number;
+    depositPercent: number;
+    paymentTermsDays: number;
+    cancellationNoticeHours: number;
+    cancellationFee: number;
+  };
+  callOut: {
+    enabled: boolean;
+    amount: number;
+    deductible: boolean;
+    waiveAbove: number;
+    notes: string;
+  };
+  cleaning: {
+    types: {
+      id: string;
+      name: string;
+      basePrice: number;
+      includedRooms: number;
+      extraRoomPrice: number;
+      enabled: boolean;
+    }[];
+    bathroomTiers: { count: number; price: number }[];
+    bathroomAdditional: number;
+    kitchenFirst: number;
+    kitchenAdditional: number;
+    laundry: number;
+    propertyAdjustments: { id: string; name: string; adjustPercent: number }[];
+    addons: PriceItem[];
+  };
+  gardening: {
+    types: {
+      id: string;
+      name: string;
+      hourlyRate: number;
+      minimumHours: number;
+      enabled: boolean;
+    }[];
+    sizes: { id: string; name: string; estimatedHours: number }[];
+    tasks: PriceItem[];
+    addons: PriceItem[];
+  };
+  mowing: {
+    sizes: { id: string; name: string; price: number }[];
+    extras: PriceItem[];
+    addons: PriceItem[];
+    minimumCharge: number;
+  };
+  frequencyDiscounts: { id: string; name: string; discountPercent: number }[];
+  surcharges: {
+    weekendPercent: number;
+    publicHolidayPercent: number;
+    afterHoursPercent: number;
+    urgentFee: number;
+    travelFreeKm: number;
+    travelPerKm: number;
+  };
+};
+
+export type PricingSettings = {
+  config: PricingConfig;
+  updatedAt: string | null;
 };
